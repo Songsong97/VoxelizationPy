@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/HelloMayaPythonPlugin.iml" filepath="$PROJECT_DIR$/.idea/HelloMayaPythonPlugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Voxelization.iml" filepath="$PROJECT_DIR$/.idea/Voxelization.iml" />
     </modules>
   </component>
 </project>
