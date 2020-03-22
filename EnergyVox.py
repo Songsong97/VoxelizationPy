@@ -31,14 +31,26 @@ class energyVox(OpenMayaMPx.MPxCommand):
 
     def doIt(self, args):
         ''' Command execution. '''
-
-
-
         mel.eval('$Evox = ' + str(15) + ';')
 
+        selection = OpenMaya.MSelectionList()
+        OpenMaya.MGlobal.getActiveSelectionList(selection)
+        iterSel = OpenMaya.MItSelectionList(selection, OpenMaya.MFn.kMesh)
 
+        while not iterSel.isDone():
+            dagPath = OpenMaya.MDagPath()
+            iterSel.getDagPath(dagPath)
+            currentInMeshMFnMesh = OpenMaya.MFnMesh(dagPath)
 
+            # Create empty point array
+            inMeshMPointArray = OpenMaya.MPointArray()
+            currentInMeshMFnMesh.getPoints(inMeshMPointArray, OpenMaya.MSpace.kWorld)
+            for i in range(inMeshMPointArray.length()):
+                self.output(inMeshMPointArray[i])
+            iterSel.next()
 
+    def output(self, vec):
+        mel.eval('print <<' + str(vec[0]) + ',' + str(vec[1]) + ',' + str(vec[2]) + '>>;')
 
 ##########################################################
 # Plug-in initialization.

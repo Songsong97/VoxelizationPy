@@ -93,17 +93,33 @@ class voxelizeCmd(OpenMayaMPx.MPxCommand):
 
         return objName
 
-
     def energy(self, objName):
         """ Calculate the energy of this voxelization"""
         source = cmds.polySeparate(objName)
         # cmds.xform(source, cpc=True)
 
-        for i in range(len(source)):
-            current = source[i]
-            # Todo
+        selection = OpenMaya.MSelectionList()
+        OpenMaya.MGlobal.getActiveSelectionList(selection)
+        iterSel = OpenMaya.MItSelectionList(selection, OpenMaya.MFn.kMesh)
 
-        return 0
+        while not iterSel.isDone():
+            dagPath = OpenMaya.MDagPath()
+            iterSel.getDagPath(dagPath)
+            currentInMeshMFnMesh = OpenMaya.MFnMesh(dagPath)
+
+            # Create empty point array
+            inMeshMPointArray = OpenMaya.MPointArray()
+            currentInMeshMFnMesh.getPoints(inMeshMPointArray, OpenMaya.MSpace.kWorld)
+            for i in range(inMeshMPointArray.length()):
+                self.output(inMeshMPointArray[i])
+            mel.eval("print \"\\r\\n\";")
+            iterSel.next()
+
+    def output(self, vec):
+        mel.eval('print <<' + str(vec[0]) + ',' + str(vec[1]) + ',' + str(vec[2]) + '>>;')
+        mel.eval("print \"\\r\\n\";")
+
+
 ##########################################################
 # Plug-in initialization.
 ##########################################################
