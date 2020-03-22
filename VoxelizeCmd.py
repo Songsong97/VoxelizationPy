@@ -20,17 +20,18 @@ kNameFlagLong = "-name"
 kIdFlagShort = "-i"
 kIdFlagLong = "-myIdFlag"
 
+
 ##########################################################
 # Plug-in
 ##########################################################
 class voxelizeCmd(OpenMayaMPx.MPxCommand):
 
     def __init__(self):
-        ''' Constructor. '''
+        """ Constructor. """
         OpenMayaMPx.MPxCommand.__init__(self)
 
     def doIt(self, args):
-        ''' Command execution. '''
+        """ Command execution. """
 
         voxelSize = 1
         gapSize = 0.1
@@ -38,8 +39,13 @@ class voxelizeCmd(OpenMayaMPx.MPxCommand):
 
         # Use the currently selected object as the source
         source = cmds.ls(sl=True)
+        objName = self.voxelize(source=source, voxelSize=voxelSize, gapSize=gapSize, knifeCount=knifeCount)
+        self.energy(objName=objName)
+
+    def voxelize(self, source, voxelSize, gapSize, knifeCount):
+        """ Voxelize the first object in source. """
         if len(source) < 1:
-            return
+            return ""
         objName = source[0]
         boundingBox = cmds.exactWorldBoundingBox(source[0])
         translation = [(boundingBox[i] + boundingBox[i + 3]) / 2.0 for i in range(3)]
@@ -84,33 +90,36 @@ class voxelizeCmd(OpenMayaMPx.MPxCommand):
         cmds.delete(source[0], ch=True)
         objName = cmds.rename(source[0], objName)
         cmds.xform(objName, cpc=True)
+
+        return objName
+
+
+    def energy(self, objName):
+        """ Calculate the energy of this voxelization"""
         source = cmds.polySeparate(objName)
-        cmds.xform(source, cpc=True)
+        # cmds.xform(source, cpc=True)
 
+        for i in range(len(source)):
+            current = source[i]
+            # Todo
 
-
-
-
-
-
-
-
+        return 0
 ##########################################################
 # Plug-in initialization.
 ##########################################################
 def cmdCreator():
-    ''' Create an instance of our command. '''
+    """ Create an instance of our command. """
     return OpenMayaMPx.asMPxPtr(voxelizeCmd())
 
 
 def syntaxCreator():
-    ''' Defines the argument and flag syntax for this command. '''
+    """ Defines the argument and flag syntax for this command. """
     syntax = OpenMaya.MSyntax()
     return syntax
 
 
 def initializePlugin(mobject):
-    ''' Initialize the plug-in when Maya loads it. '''
+    """ Initialize the plug-in when Maya loads it. """
     mplugin = OpenMayaMPx.MFnPlugin(mobject, "cg@penn", "1.0", "2020")
     try:
         mplugin.registerCommand(kPluginCmdName, cmdCreator, syntaxCreator)
@@ -119,7 +128,7 @@ def initializePlugin(mobject):
 
 
 def uninitializePlugin(mobject):
-    ''' Uninitialize the plug-in when Maya un-loads it. '''
+    """ Uninitialize the plug-in when Maya un-loads it. """
     mplugin = OpenMayaMPx.MFnPlugin(mobject)
     try:
         mplugin.deregisterCommand(kPluginCmdName)
