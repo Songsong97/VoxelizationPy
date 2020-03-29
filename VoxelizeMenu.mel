@@ -1,0 +1,124 @@
+global proc onCloseVoxelizeGUI() {
+	global string $voxelPreviewNode1;
+	global string $transformNode1;
+	global string $frameMesh1;
+	global string $snode;
+	global string $ssnode;
+	
+	delete $voxelPreviewNode1;	
+	delete $frameMesh1;
+	delete $transformNode1;
+	delete $ssnode;
+	delete $snode;
+}
+
+global proc initializePreview() {
+	// Create preview node of the voxelization
+	global string $voxelPreviewNode1;
+	$voxelPreviewNode1 = `createNode voxelPreviewNode -n voxelPreviewNode1`;
+	global string $transformNode1;
+	$transformNode1 = `createNode transform -n voxelizer`;
+	global string $frameMesh1;
+	$frameMesh1 = `createNode mesh -n frameMesh1 -p $transformNode1`;
+	connectAttr ($voxelPreviewNode1 + ".knifeFrame") ($frameMesh1 + ".inMesh");
+	
+	// Create shader for the preview
+	global string $snode;
+	$snode = `shadingNode -asShader lambert`;
+	global string $ssnode;
+	$ssnode = `sets -renderable true -noSurfaceShader true -empty -name lambert2SG`;
+	connectAttr -f ($snode + ".outColor") ($ssnode + ".surfaceShader");
+	connectAttr ($frameMesh1 + ".instObjGroups[0]") ($ssnode + ".dagSetMembers[1]");
+	setAttr ($snode + ".transparency") -type double3 0.75 0.75 0.75;
+	
+	// Lock the transform node		
+	setAttr -lock on ($transformNode1 + ".translate");
+	setAttr -lock on ($transformNode1 + ".rotate");
+	setAttr -lock on ($transformNode1 + ".scale");
+	setAttr -lock on ($transformNode1 + ".shear");	
+}
+
+global proc onValueChange(int $index) {
+	global string $voxelPreviewNode1;
+	switch($index) {
+	case 0: setAttr ($voxelPreviewNode1 + ".knifeCountX") (`intField -q -v xVoxelNumber` - 1); break;
+	case 1: setAttr ($voxelPreviewNode1 + ".knifeCountY") (`intField -q -v yVoxelNumber` - 1); break;
+	case 2: setAttr ($voxelPreviewNode1 + ".knifeCountZ") (`intField -q -v zVoxelNumber` - 1); break;
+	case 3: setAttr ($voxelPreviewNode1 + ".offsetX") (`floatField -q -v xOffset`); break;
+	case 4: setAttr ($voxelPreviewNode1 + ".offsetY") (`floatField -q -v yOffset`); break;
+	case 5: setAttr ($voxelPreviewNode1 + ".offsetZ") (`floatField -q -v zOffset`); break;
+	case 6: setAttr ($voxelPreviewNode1 + ".voxelSize") (`floatField -q -v voxelSize`); break;
+	default: break;
+	}
+}
+
+global proc voxelizeProc() {
+	$voxelizeCmd = "voxelize";
+	$voxelizeCmd = $voxelizeCmd + " -ox " + (string)(`floatField -q -v xOffset`);
+	$voxelizeCmd = $voxelizeCmd + " -oy " + (string)(`floatField -q -v yOffset`);
+	$voxelizeCmd = $voxelizeCmd + " -oz " + (string)(`floatField -q -v zOffset`);
+	$voxelizeCmd = $voxelizeCmd + " -kx " + (string)(`intField -q -v xVoxelNumber` - 1);
+	$voxelizeCmd = $voxelizeCmd + " -ky " + (string)(`intField -q -v yVoxelNumber` - 1);
+	$voxelizeCmd = $voxelizeCmd + " -kz " + (string)(`intField -q -v zVoxelNumber` - 1);
+	$voxelizeCmd = $voxelizeCmd + " -vz " + (string)(`floatField -q -v voxelSize`);
+	eval($voxelizeCmd);
+}
+
+global proc openVoxelizeGUI() {
+	if (!`window -exists voxelizeWindow`) {
+		$selected = `ls -sl`;
+		initializePreview();
+		window -title "Everything Box" -cc "onCloseVoxelizeGUI" voxelizeWindow;
+		columnLayout;
+		text -label "Voxelize the object you select" -font "boldLabelFont";
+		text -label " " -font "boldLabelFont";
+		rowLayout -numberOfColumns 4
+			-columnWidth4 100 70 70 70
+			-columnAlign  1 "center"
+			-columnAttach 1 "left"  0
+			-columnAttach 2 "left"  0
+			-columnAttach 3 "left"  0;
+		text -label "Voxel Numbers ";
+		intField -minValue 2 -value 2 -cc "onValueChange(0)" xVoxelNumber;
+		intField -minValue 2 -value 2 -cc "onValueChange(1)" yVoxelNumber;
+		intField -minValue 2 -value 2 -cc "onValueChange(2)" zVoxelNumber;
+		setParent ..;
+		rowLayout -numberOfColumns 4
+			-columnWidth4 100 70 70 70
+			-columnAlign  1 "center"
+			-columnAttach 1 "left"  0
+			-columnAttach 2 "left"  0
+			-columnAttach 3 "left"  0;
+		text -label "Voxel Offset ";
+		floatField -cc "onValueChange(3)" xOffset;
+		floatField -cc "onValueChange(4)" yOffset;
+		floatField -cc "onValueChange(5)" zOffset;
+		setParent ..;
+		rowLayout -numberOfColumns 2
+			-columnWidth2 100 70
+			-columnAlign  1 "center"
+			-columnAttach 1 "left"  0;
+		text -label "Voxel Size ";
+		floatField -minValue 0.5 -value 0.5 -cc "onValueChange(6)" voxelSize;
+		setParent ..;
+		button -label "Voxelize" -c "voxelizeProc";
+		// Todo:
+		text -label "todo";
+		select -r $selected;
+	}
+	showWindow voxelizeWindow;
+	
+}
+global proc loadMenu() {
+	global string $myMenuMain;
+	if (`menu -exists $myMenuMain`)
+	   deleteUI $myMenuMain;
+ 
+    global string $gMainWindow;
+	setParent $gMainWindow;
+    $myMenuMain = `menu -label "EverythingBox" -tearOff on`;
+ 
+	menuItem -label "Voxelize" -c "openVoxelizeGUI";
+}
+
+loadMenu;
